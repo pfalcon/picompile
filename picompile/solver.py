@@ -5,10 +5,6 @@ from collections import deque
 from .typesys import *
 
 
-def empty():
-    return {}
-
-
 def apply(s, t):
     if isinstance(t, TCon):
         return t
@@ -23,7 +19,7 @@ def apply(s, t):
 
 
 def applyList(s, xs):
-    return [(apply(s, x), apply(s, y)) for (x, y) in xs]
+    return [(apply(s, x), apply(s, y)) for x, y in xs]
 
 
 def unify(x, y):
@@ -31,8 +27,8 @@ def unify(x, y):
         s1 = unify(x.a, y.a)
         s2 = unify(apply(s1, x.b), apply(s1, y.b))
         return compose(s2, s1)
-    elif isinstance(x, TCon) and isinstance(y, TCon) and (x == y):
-        return empty()
+    elif isinstance(x, TCon) and isinstance(y, TCon) and x == y:
+        return {}
     elif isinstance(x, TFun) and isinstance(y, TFun):
         if len(x.argtys) != len(y.argtys):
             return Exception("Wrong number of arguments")
@@ -48,10 +44,10 @@ def unify(x, y):
 
 
 def solve(xs):
-    mgu = empty()
+    mgu = {}
     cs = deque(xs)
-    while len(cs):
-        (a, b) = cs.pop()
+    while cs:
+        a, b = cs.pop()
         s = unify(a, b)
         mgu = compose(s, mgu)
         cs = deque(applyList(s, cs))
@@ -60,11 +56,11 @@ def solve(xs):
 
 def bind(n, x):
     if x == n:
-        return empty()
+        return {}
     elif occurs_check(n, x):
         raise InfiniteType(n, x)
     else:
-        return dict([(n, x)])
+        return {n: x}
 
 
 def occurs_check(n, x):
@@ -78,5 +74,5 @@ def union(s1, s2):
 
 
 def compose(s1, s2):
-    s3 = dict((t, apply(s1, u)) for t, u in s2.items())
+    s3 = {t: apply(s1, u) for t, u in s2.items()}
     return union(s1, s3)
